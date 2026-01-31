@@ -1,0 +1,286 @@
+BEGIN;
+
+-- ========================================================
+-- 1. ADIM: ARAÇ YAPILANDIRMASI (Tip, Marka, Model)
+-- ========================================================
+
+-- A) KASA TİPLERİ
+INSERT INTO vehicle_type (type_name, description) VALUES 
+('Sedan', 'Standart 4 kapılı binek'),
+('Hatchback', 'Arka kapılı kısa kasa'),
+('SUV', 'Arazi ve şehir tipi yüksek araç'),
+('Station Wagon', 'Geniş bagajlı binek'),
+('Pick-up', 'Arkası açık kasalı yük ve yolcu taşıma aracı'),
+('Minivan', 'Yüksek tavanlı, geniş iç hacimli aile aracı'),
+('Coupe', 'Genellikle 2 kapılı spor görünümlü araç'),
+('Cabrio', 'Üstü açılabilen spor araç'),
+('Panelvan', 'Kapalı kasa ticari');
+
+-- B) MARKALAR
+INSERT INTO brand (brand_name) VALUES 
+('Toyota'), ('Renault'), ('Fiat'), ('Ford'), ('Volkswagen'), 
+('BMW'), ('Mercedes-Benz'), ('Honda'), ('Hyundai'), ('Peugeot'),
+('Opel'), ('Citroen'), ('Dacia'), ('Nissan'), ('Skoda'),
+('Togg');
+
+-- C) MODELLER
+-- Not: brand_id ve vehicle_type_id subquery ile çekiliyor.
+
+-- FORD
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Ford'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Focus', 'Benzin/Dizel', 5, 1850),
+((SELECT brand_id FROM brand WHERE brand_name='Ford'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Mondeo', 'Dizel', 5, 2100),
+((SELECT brand_id FROM brand WHERE brand_name='Ford'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Pick-up'), 'Ranger', 'Dizel', 5, 3200),
+((SELECT brand_id FROM brand WHERE brand_name='Ford'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Minivan'), 'Transit Custom', 'Dizel', 9, 3000),
+((SELECT brand_id FROM brand WHERE brand_name='Ford'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Kuga', 'Benzin', 5, 2200);
+
+-- TOYOTA
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Toyota'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Corolla', 'Hibrit', 5, 1800),
+((SELECT brand_id FROM brand WHERE brand_name='Toyota'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Yaris', 'Benzin', 5, 1500),
+((SELECT brand_id FROM brand WHERE brand_name='Toyota'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'RAV4', 'Hibrit', 5, 2300),
+((SELECT brand_id FROM brand WHERE brand_name='Toyota'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Pick-up'), 'Hilux', 'Dizel', 5, 2800);
+
+-- RENAULT
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Renault'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Clio', 'Benzin', 5, 1600),
+((SELECT brand_id FROM brand WHERE brand_name='Renault'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Megane', 'Dizel', 5, 1900),
+((SELECT brand_id FROM brand WHERE brand_name='Renault'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Austral', 'Hibrit', 5, 2100);
+
+-- FIAT
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Fiat'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Egea', 'Dizel', 5, 1800),
+((SELECT brand_id FROM brand WHERE brand_name='Fiat'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Minivan'), 'Doblo', 'Dizel', 5, 2400),
+((SELECT brand_id FROM brand WHERE brand_name='Fiat'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), '500', 'Elektrik', 4, 1400);
+
+-- VOLKSWAGEN
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Volkswagen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Golf', 'Benzin', 5, 1800),
+((SELECT brand_id FROM brand WHERE brand_name='Volkswagen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Passat', 'Dizel', 5, 2100),
+((SELECT brand_id FROM brand WHERE brand_name='Volkswagen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Tiguan', 'Dizel', 5, 2200);
+
+-- HONDA
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Honda'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Civic', 'Benzin', 5, 1750),
+((SELECT brand_id FROM brand WHERE brand_name='Honda'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'CR-V', 'Hibrit', 5, 2200);
+
+-- MERCEDES-BENZ
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Mercedes-Benz'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'C-Serisi', 'Benzin/Hibrit', 5, 2100),
+((SELECT brand_id FROM brand WHERE brand_name='Mercedes-Benz'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'E-Serisi', 'Dizel', 5, 2300),
+((SELECT brand_id FROM brand WHERE brand_name='Mercedes-Benz'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'GLC', 'Dizel/Hibrit', 5, 2500),
+((SELECT brand_id FROM brand WHERE brand_name='Mercedes-Benz'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Panelvan'), 'Vito', 'Dizel', 9, 3100);
+
+-- NISSAN
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Nissan'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Qashqai', 'Benzin/Hibrit', 5, 2000),
+((SELECT brand_id FROM brand WHERE brand_name='Nissan'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'X-Trail', 'Hibrit', 7, 2400),
+((SELECT brand_id FROM brand WHERE brand_name='Nissan'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Juke', 'Benzin', 5, 1800),
+((SELECT brand_id FROM brand WHERE brand_name='Nissan'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Pick-up'), 'Navara', 'Dizel', 5, 3000);
+
+-- OPEL
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Opel'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Astra', 'Benzin/Dizel', 5, 1900),
+((SELECT brand_id FROM brand WHERE brand_name='Opel'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Corsa', 'Benzin/Elektrik', 5, 1600),
+((SELECT brand_id FROM brand WHERE brand_name='Opel'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Mokka', 'Benzin/Elektrik', 5, 1800),
+((SELECT brand_id FROM brand WHERE brand_name='Opel'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Minivan'), 'Combo', 'Dizel', 5, 2200);
+
+-- PEUGEOT
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Peugeot'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), '3008', 'Dizel/Hibrit', 5, 2100),
+((SELECT brand_id FROM brand WHERE brand_name='Peugeot'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), '2008', 'Benzin/Elektrik', 5, 1800),
+((SELECT brand_id FROM brand WHERE brand_name='Peugeot'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), '208', 'Benzin', 5, 1600),
+((SELECT brand_id FROM brand WHERE brand_name='Peugeot'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), '508', 'Dizel', 5, 2000),
+((SELECT brand_id FROM brand WHERE brand_name='Peugeot'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Minivan'), 'Rifter', 'Dizel', 5, 2100);
+
+-- SKODA
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Skoda'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Octavia', 'Benzin/Dizel', 5, 2000),
+((SELECT brand_id FROM brand WHERE brand_name='Skoda'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Superb', 'Dizel', 5, 2200),
+((SELECT brand_id FROM brand WHERE brand_name='Skoda'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Kodiaq', 'Dizel', 7, 2500),
+((SELECT brand_id FROM brand WHERE brand_name='Skoda'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Fabia', 'Benzin', 5, 1600);
+
+-- BMW
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='BMW'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), '3 Serisi', 'Benzin/Dizel', 5, 2000),
+((SELECT brand_id FROM brand WHERE brand_name='BMW'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), '5 Serisi', 'Dizel/Hibrit', 5, 2250),
+((SELECT brand_id FROM brand WHERE brand_name='BMW'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'X5', 'Dizel', 5, 2600),
+((SELECT brand_id FROM brand WHERE brand_name='BMW'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Coupe'), 'M4', 'Benzin', 4, 1800);
+
+-- CITROEN
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Citroen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'C3', 'Benzin', 5, 1500),
+((SELECT brand_id FROM brand WHERE brand_name='Citroen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'C5 Aircross', 'Dizel/Hibrit', 5, 2100),
+((SELECT brand_id FROM brand WHERE brand_name='Citroen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Panelvan'), 'Berlingo', 'Dizel', 5, 2200),
+((SELECT brand_id FROM brand WHERE brand_name='Citroen'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'C-Elysee', 'Dizel', 5, 1600);
+
+-- DACIA
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Dacia'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Duster', 'Dizel/LPG', 5, 1900),
+((SELECT brand_id FROM brand WHERE brand_name='Dacia'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Sandero Stepway', 'Benzin/LPG', 5, 1650),
+((SELECT brand_id FROM brand WHERE brand_name='Dacia'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Station Wagon'), 'Jogger', 'LPG/Hibrit', 7, 2000),
+((SELECT brand_id FROM brand WHERE brand_name='Dacia'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'Spring', 'Elektrik', 4, 1300);
+
+-- HYUNDAI
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Hyundai'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Tucson', 'Benzin/Hibrit', 5, 2200),
+((SELECT brand_id FROM brand WHERE brand_name='Hyundai'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Hatchback'), 'i20', 'Benzin', 5, 1550),
+((SELECT brand_id FROM brand WHERE brand_name='Hyundai'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'Elantra', 'Benzin', 5, 1850),
+((SELECT brand_id FROM brand WHERE brand_name='Hyundai'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'Kona', 'Elektrik/Hibrit', 5, 1950);
+
+-- TOGG MODELLERİ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+INSERT INTO model (brand_id, vehicle_type_id, model_name, fuel_type, passenger_capacity, max_weight) VALUES
+((SELECT brand_id FROM brand WHERE brand_name='Togg'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='SUV'), 'T10X', 'Elektrik', 5, 2650),
+((SELECT brand_id FROM brand WHERE brand_name='Togg'), (SELECT vehicle_type_id FROM vehicle_type WHERE type_name='Sedan'), 'T10F', 'Elektrik', 5, 2600);
+
+-- ========================================================
+-- 2. ADIM: İSTASYONLAR
+-- ========================================================
+INSERT INTO inspection_station (station_name, city, address, phone_number, capacity_per_day) VALUES
+('Dudullu Muayene İstasyonu', 'İstanbul', 'Dudullu OSB Mah. 1. Cadde', '02161234567', 50),
+('Tüvtürk Orhanlı', 'İstanbul', 'Orhanlı Mah. Demokrasi Cad.', '02169876543', 60),
+('Maslak Muayene İstasyonu', 'İstanbul', 'Atatürk Oto Sanayi Sitesi 2. Kısım', '02123461234', 250),
+('Esenyurt Muayene İstasyonu', 'İstanbul', 'Fatih Oto Sanayi Sitesi', '02125905678', 300),
+('İvedik Muayene İstasyonu', 'Ankara', 'İvedik OSB 21. Cad.', '03123954411', 260),
+('Gaziemir Muayene İstasyonu', 'İzmir', 'Sarnıç Yolu Üzeri', '02322813322', 240);
+
+-- ========================================================
+-- 3. ADIM: PERSONELLER (Ana Tablo)
+-- ========================================================
+
+-- DUDULLU (Ahmet, Ayşe)
+INSERT INTO personnel (first_name, last_name, hire_date, department, work_shift, salary, personnel_type, station_id) VALUES 
+('Ahmet', 'Yılmaz', CURRENT_DATE, 'Teknik Operasyon', '08:00-17:00', 45000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Dudullu Muayene İstasyonu')),
+('Ayşe', 'Demir', CURRENT_DATE, 'Teknik Operasyon', '08:00-17:00', 47000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Dudullu Muayene İstasyonu'));
+
+-- ORHANLI (Mehmet)
+INSERT INTO personnel (first_name, last_name, hire_date, department, work_shift, salary, personnel_type, station_id) VALUES 
+('Mehmet', 'Kaya', CURRENT_DATE, 'Teknik Operasyon', '08:00-17:00', 42000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Tüvtürk Orhanlı'));
+
+-- MASLAK (Hakan, Mustafa + Emre Demir, Ayşe Yıldız)
+INSERT INTO personnel (first_name, last_name, hire_date, department, work_shift, salary, personnel_type, station_id) VALUES 
+('Hakan', 'Çelik', '2021-03-01', 'Muayene', '08:00-17:00', 32000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Maslak Muayene İstasyonu')),
+('Mustafa', 'Yılmaz', '2023-05-10', 'Mekanik', '08:00-17:00', 28000, 'TECHNICIAN', (SELECT station_id FROM inspection_station WHERE station_name='Maslak Muayene İstasyonu')),
+('Emre', 'Demir', '2024-01-15', 'Alt Takım', '08:00-17:00', 24000, 'TECHNICIAN', (SELECT station_id FROM inspection_station WHERE station_name='Maslak Muayene İstasyonu')),
+('Ayşe', 'Yıldız', '2024-02-01', 'Danışma', '08:00-17:00', 22000, 'OFFICE', (SELECT station_id FROM inspection_station WHERE station_name='Maslak Muayene İstasyonu'));
+
+-- İVEDİK (Levent, Selin)
+INSERT INTO personnel (first_name, last_name, hire_date, department, work_shift, salary, personnel_type, station_id) VALUES 
+('Levent', 'Sönmez', '2020-01-10', 'Muayene', '16:00-00:00', 34000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='İvedik Muayene İstasyonu')),
+('Selin', 'Öztürk', '2022-11-20', 'Elektrik', '16:00-00:00', 26500, 'TECHNICIAN', (SELECT station_id FROM inspection_station WHERE station_name='İvedik Muayene İstasyonu'));
+
+-- ESENYURT (Canan, Burcu)
+INSERT INTO personnel (first_name, last_name, hire_date, department, work_shift, salary, personnel_type, station_id) VALUES 
+('Burcu', 'Kaya', '2023-08-15', 'Muayene', '08:00-17:00', 30500, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Esenyurt Muayene İstasyonu')),
+('Canan', 'Erkin', '2022-05-20', 'Muayene', '08:00-17:00', 31000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Esenyurt Muayene İstasyonu'));
+
+-- GAZİEMİR (Murat)
+INSERT INTO personnel (first_name, last_name, hire_date, department, work_shift, salary, personnel_type, station_id) VALUES 
+('Murat', 'Vural', '2021-11-12', 'Muayene', '08:00-17:00', 33000, 'INSPECTOR', (SELECT station_id FROM inspection_station WHERE station_name='Gaziemir Muayene İstasyonu'));
+
+-- ========================================================
+-- 3.1 ADIM: ALT PERSONEL TABLOLARI (Inheritance Doldurma)
+-- ========================================================
+
+-- A) MÜFETTİŞLER (Inspector)
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-34-001' FROM personnel WHERE first_name='Ahmet' AND last_name='Yılmaz';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-34-002' FROM personnel WHERE first_name='Ayşe' AND last_name='Demir';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-34-003' FROM personnel WHERE first_name='Mehmet' AND last_name='Kaya';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-34-004' FROM personnel WHERE first_name='Hakan' AND last_name='Çelik';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-34-005' FROM personnel WHERE first_name='Burcu' AND last_name='Kaya';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-06-089' FROM personnel WHERE first_name='Levent' AND last_name='Sönmez';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-34-006' FROM personnel WHERE first_name='Canan' AND last_name='Erkin';
+
+INSERT INTO inspector (personnel_id, stamp_number)
+SELECT personnel_id, 'TR-35-001' FROM personnel WHERE first_name='Murat' AND last_name='Vural';
+
+-- B) TEKNİSYENLER (Technician)
+INSERT INTO technician (personnel_id, expertise_area, experience_years, certification_level)
+SELECT personnel_id, 'Motor', 12, 'Master Tech' FROM personnel WHERE first_name='Mustafa' AND last_name='Yılmaz';
+
+INSERT INTO technician (personnel_id, expertise_area, experience_years, certification_level)
+SELECT personnel_id, 'Fren', 5, 'Level 2' FROM personnel WHERE first_name='Emre' AND last_name='Demir';
+
+INSERT INTO technician (personnel_id, expertise_area, experience_years, certification_level)
+SELECT personnel_id, 'Elektrik', 8, 'Level 3' FROM personnel WHERE first_name='Selin' AND last_name='Öztürk';
+
+-- C) OFİS PERSONELİ (Office Staff)
+INSERT INTO office_staff (personnel_id, authorization_code, qualification_level)
+SELECT personnel_id, 'AUTH-001', 'Senior' FROM personnel WHERE first_name='Ayşe' AND last_name='Yıldız';
+
+-- ========================================================
+-- 4. ADIM: TEST PARAMETRELERİ
+-- ========================================================
+INSERT INTO test_parameter (test_name, unit, min_limit, max_limit) VALUES
+('Fren Kuvveti (Ön)', 'kN', 2.5, 8.0),
+('Fren Kuvveti (Arka)', 'kN', 1.5, 6.0),
+('El Freni Kuvveti', 'kN', 1.8, 5.0),
+('Fren Sapması (Ön)', '%', 0, 20),
+('Fren Sapması (Arka)', '%', 0, 30),
+('Far Yükseklik Ayarı (Kısa)', '%', -2.5, -0.5),
+('Lastik Diş Derinliği', 'mm', 1.6, 10.0),
+('Egzoz Emisyon (CO)', '%', 0, 3.5),
+('Egzoz Emisyon (Lambda)', '-', 0.97, 1.03),
+('Gürültü Seviyesi', 'dB', 0, 95);
+
+-- ========================================================
+-- 5. ADIM: KUSUR KATALOĞU
+-- ========================================================
+-- ÖNEMLİ: Yeni şemada Severity 'Minor', 'Major', 'Unsafe' olmak zorunda.
+-- HAFİF KUSUR -> Minor
+-- AĞIR KUSUR -> Major
+-- EMNİYETSİZ -> Unsafe
+
+INSERT INTO defect_catalog (defect_code, description, severity) VALUES
+-- Fren Sistemi
+('1.1.3', 'Fren pedalı lastiği yok/aşınmış', 'Minor'),
+('1.2.1', 'El freni tutmuyor', 'Major'),
+('1.4.3', 'Fren hortumları hasarlı/balon yapmış', 'Unsafe'),
+('1.5.2', 'Fren balataları bitik', 'Major'),
+('1.8.1', 'Fren hidrolik seviyesi düşük', 'Minor'),
+-- Direksiyon
+('2.1.1', 'Direksiyon simidinde aşırı boşluk', 'Major'),
+('2.3.2', 'Rot körükleri yırtık', 'Minor'),
+-- Görüş
+('3.1.1', 'Ön camda çatlak (Görüş alanında)', 'Major'),
+('3.2.1', 'Dikiz aynası kırık/yok', 'Major'),
+('3.3.1', 'Silecek lastikleri yıpranmış', 'Minor'),
+('3.4.1', 'Cam suyu çalışmıyor', 'Minor'),
+-- Aydınlatma
+('4.1.2', 'Kısa farlar yanmıyor', 'Major'),
+('4.3.1', 'Fren lambaları yanmıyor', 'Major'),
+('4.4.2', 'Sinyal lambası camı kırık/rengi solmuş', 'Minor'),
+('4.5.1', 'Plaka lambası yanmıyor', 'Minor'),
+-- Yürüyen Aksam
+('5.2.1', 'Lastik diş derinliği sınırın altında (<1.6mm)', 'Major'),
+('5.2.2', 'Lastikte balon/yarık var', 'Unsafe'),
+('5.3.2', 'Bijon eksik veya gevşek', 'Major'),
+-- Şasi ve Gövde
+('6.1.1', 'Şaside yüzeysel paslanma', 'Minor'),
+('6.2.1', 'Egzoz delik/patlak', 'Major'),
+('6.3.1', 'Yakıt sızıntısı var', 'Unsafe'),
+('6.5.1', 'Kapılar kapanmıyor/kilitlenmiyor', 'Major'),
+-- Donanım
+('7.1.1', 'Emniyet kemeri arızalı', 'Major'),
+('7.2.1', 'Korna çalışmıyor', 'Minor'),
+('7.4.1', 'Yangın tüpü yok/tarihi geçmiş', 'Minor'),
+('7.5.1', 'İlk yardım çantası yok', 'Minor'),
+-- Motor
+('8.1.1', 'Motor yağ kaçırıyor', 'Major'),
+('8.2.1', 'Şasi numarası okunamıyor', 'Minor'),
+('8.3.1', 'Akü sabitlemesi yok', 'Major');
+
+COMMIT;

@@ -1,0 +1,253 @@
+BEGIN;
+
+-- ========================================================
+-- 1. VARLIK BAŞLIĞI: SAHİPLER (OWNERS) - Parent Table
+-- ========================================================
+CREATE TABLE owner (
+    owner_id BIGSERIAL PRIMARY KEY,
+    owner_type TEXT NOT NULL CHECK (owner_type IN ('INDIVIDUAL','COMPANY')),
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Miras Alan Tablo: Bireysel Müşteriler
+CREATE TABLE individual_owner (
+    owner_id BIGINT PRIMARY KEY REFERENCES owner(owner_id),
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    national_id TEXT UNIQUE NOT NULL
+);
+
+-- Miras Alan Tablo: Kurumsal Müşteriler
+CREATE TABLE company_owner (
+    owner_id BIGINT PRIMARY KEY REFERENCES owner(owner_id),
+    company_name TEXT NOT NULL,
+    tax_number TEXT UNIQUE NOT NULL,
+    tax_office TEXT,
+    contact_person TEXT
+);
+
+-- ========================================================
+-- 2. VARLIK BAŞLIĞI: İLETİŞİM VE ADRES (OWNER CONTACTS & ADDRESS)
+-- ========================================================
+-- Chen Diyagramı: Owners (1) ----< Owns >---- (N) OwnerContacts
+CREATE TABLE owner_contact (
+    contact_id BIGSERIAL PRIMARY KEY,
+    owner_id BIGINT NOT NULL REFERENCES owner(owner_id),
+    contact_type TEXT, -- Telefon, Email vb.
+    contact_value TEXT,
+    is_primary BOOLEAN DEFAULT FALSE
+);
+
+-- Chen Diyagramı: Owners (1) ----< Owns >---- (N) Address
+-- Ara tablo SİLİNDİ, owner_id doğrudan buraya eklendi (1-N ilişki).
+CREATE TABLE address (
+    address_id BIGSERIAL PRIMARY KEY,
+    owner_id BIGINT NOT NULL REFERENCES owner(owner_id),
+    address_title TEXT, -- Ev, İş vb.
+    street TEXT,
+    building_no TEXT,
+    door_no TEXT,
+    district TEXT,
+    city TEXT,
+    zip_code TEXT
+);
+
+-- ========================================================
+-- 3. VARLIK BAŞLIĞI: ARAÇ YAPISI (BRAND, MODEL, VEHICLE TYPE)
+-- ========================================================
+CREATE TABLE brand (
+    brand_id BIGSERIAL PRIMARY KEY,
+    brand_name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE vehicle_type (
+    vehicle_type_id BIGSERIAL PRIMARY KEY,
+    type_name TEXT NOT NULL, -- Sedan, SUV vb.
+    description TEXT
+);
+
+-- Chen Diyagramı: Brand (1) ---< Has >--- (N) Model
+-- Chen Diyagramı: VehicleType (1) ---< Defines >--- (N) Model
+CREATE TABLE model (
+    model_id BIGSERIAL PRIMARY KEY,
+    brand_id BIGINT NOT NULL REFERENCES brand(brand_id),
+    vehicle_type_id BIGINT NOT NULL REFERENCES vehicle_type(vehicle_type_id),
+    model_name TEXT NOT NULL,
+    fuel_type TEXT,
+    passenger_capacity INT,
+    max_weight INT
+);
+
+-- ========================================================
+-- 4. VARLIK BAŞLIĞI: ARAÇ VE RUHSAT (VEHICLE & LICENSE)
+-- ========================================================
+-- Chen Diyagramı: Model (1) ---< Defines >--- (N) Vehicle
+-- "vehicle_owner" ara tablosu SİLİNDİ, araç sahibini doğrudan bilir (1-N).
+CREATE TABLE vehicle (
+    vehicle_id BIGSERIAL PRIMARY KEY,
+    model_id BIGINT NOT NULL REFERENCES model(model_id),
+    chassis_number TEXT UNIQUE NOT NULL,
+    engine_number TEXT UNIQUE NOT NULL,
+    color TEXT,
+    production_year INT
+);
+
+-- Chen Diyagramı: Vehicle (1) ---< Has >--- (N) LicenseRegistration
+CREATE TABLE license_registration (
+    registration_id BIGSERIAL PRIMARY KEY,
+    vehicle_id BIGINT NOT NULL REFERENCES vehicle(vehicle_id),
+    owner_id BIGINT NOT NULL REFERENCES owner(owner_id),
+    plate_number TEXT UNIQUE NOT NULL,
+    license_serial_code TEXT UNIQUE NOT NULL,
+    registration_date DATE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- ========================================================
+-- 5. VARLIK BAŞLIĞI: İSTASYON (INSPECTION STATION)
+-- ========================================================
+CREATE TABLE inspection_station (
+    station_id BIGSERIAL PRIMARY KEY,
+    station_name TEXT NOT NULL,
+    address TEXT,
+    city TEXT,
+    phone_number TEXT,
+    capacity_per_day INT
+);
+
+-- ========================================================
+-- 6. VARLIK BAŞLIĞI: PERSONEL (PERSONNEL) - Parent Table
+-- ========================================================
+-- Chen Diyagramı: InspectionStation (1) ---< Employees >--- (N) Personnel
+-- "station_personnel" ara tablosu SİLİNDİ, personel istasyonunu bilir (1-N).
+CREATE TABLE personnel (
+    personnel_id BIGSERIAL PRIMARY KEY,
+    station_id BIGINT REFERENCES inspection_station(station_id),
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    hire_date DATE,
+    department TEXT,
+    work_shift TEXT,
+    salary NUMERIC(10,2),
+    personnel_type TEXT NOT NULL CHECK (personnel_type IN ('TECHNICIAN','INSPECTOR','OFFICE'))
+);
+
+-- Miras Alan Tablo: Ofis Personeli
+CREATE TABLE office_staff (
+    personnel_id BIGINT PRIMARY KEY REFERENCES personnel(personnel_id),
+    authorization_code TEXT UNIQUE,
+    qualification_level TEXT,
+    experience_years INT
+);
+
+-- Miras Alan Tablo: Teknisyen
+CREATE TABLE technician (
+    personnel_id BIGINT PRIMARY KEY REFERENCES personnel(personnel_id),
+    expertise_area TEXT,
+    experience_years INT,
+    certification_level TEXT
+);
+
+-- Miras Alan Tablo: Müfettiş (Muayene Uzmanı)
+CREATE TABLE inspector (
+    personnel_id BIGINT PRIMARY KEY REFERENCES personnel(personnel_id),
+    stamp_number TEXT UNIQUE NOT NULL
+);
+
+-- ========================================================
+-- 7. VARLIK BAŞLIĞI: RANDEVU (APPOINTMENT)
+-- ========================================================
+-- Chen Diyagramı: Vehicle (1) ---< Requests >--- (N) Appointment
+-- Chen Diyagramı: InspectionStation (1) ---< Hosts >--- (N) Appointment
+CREATE TABLE appointment (
+    appointment_id BIGSERIAL PRIMARY KEY,
+    vehicle_id BIGINT NOT NULL REFERENCES vehicle(vehicle_id),
+    station_id BIGINT NOT NULL REFERENCES inspection_station(station_id),
+    appointment_date TIMESTAMP NOT NULL,
+    status TEXT -- 'Active', 'Completed', 'Cancelled'
+);
+
+-- ========================================================
+-- 8. VARLIK BAŞLIĞI: MUAYENE (INSPECTION)
+-- ========================================================
+-- Chen Diyagramı: Appointment (1) ---< Generates >--- (1) Inspection
+-- Chen Diyagramı: Inspector (1) ---< Conducts >--- (N) Inspection
+CREATE TABLE inspection (
+    inspection_id BIGSERIAL PRIMARY KEY,
+    appointment_id BIGINT NOT NULL REFERENCES appointment(appointment_id),
+    inspector_id BIGINT REFERENCES inspector(personnel_id), -- Sadece Inspector tipindekiler yapabilir
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    technician_notes TEXT,
+    result_status TEXT -- 'Passed', 'Failed', 'Conditional'
+);
+
+-- ========================================================
+-- 9. VARLIK BAŞLIĞI: TESTLER (TEST PARAMETERS & RESULTS)
+-- ========================================================
+CREATE TABLE test_parameter (
+    test_parameter_id BIGSERIAL PRIMARY KEY,
+    test_name TEXT NOT NULL,
+    unit TEXT,
+    min_limit NUMERIC,
+    max_limit NUMERIC
+);
+
+-- Chen Diyagramı: Inspection (1) ---< Contains >--- (N) TestResult
+-- Chen Diyagramı: TestParameter (1) ---< Defines >--- (N) TestResult
+CREATE TABLE test_result (
+    test_result_id BIGSERIAL PRIMARY KEY,
+    inspection_id BIGINT REFERENCES inspection(inspection_id),
+    test_parameter_id BIGINT REFERENCES test_parameter(test_parameter_id),
+    measured_value NUMERIC,
+    standard_value_applied BOOLEAN,
+    is_passed BOOLEAN,
+    comments TEXT
+);
+
+-- ========================================================
+-- 10. VARLIK BAŞLIĞI: KUSURLAR (DEFECTS)
+-- ========================================================
+CREATE TABLE defect_catalog (
+    defect_id BIGSERIAL PRIMARY KEY,
+    defect_code TEXT UNIQUE NOT NULL,
+    description TEXT,
+    severity TEXT -- 'Minor', 'Major', 'Unsafe'
+);
+
+-- Chen Diyagramı: Inspection (N) ---< HasDefects >--- (N) DefectCatalog
+-- Çoka-Çok ilişki olduğu için ve "LocationNote" özelliği olduğu için bu ara tablo ZORUNLUDUR.
+CREATE TABLE inspection_defect (
+    inspection_id BIGINT REFERENCES inspection(inspection_id),
+    defect_id BIGINT REFERENCES defect_catalog(defect_id),
+    location_note TEXT, -- Diyagramdaki ilişki özelliği
+    PRIMARY KEY (inspection_id, defect_id)
+);
+
+-- ========================================================
+-- 11. VARLIK BAŞLIĞI: ÖDEME (PAYMENT)
+-- ========================================================
+-- Chen Diyagramı: Inspection (1) ---< Requires >--- (N) Payment
+CREATE TABLE payment (
+    payment_id BIGSERIAL PRIMARY KEY,
+    inspection_id BIGINT NOT NULL REFERENCES inspection(inspection_id),
+    payment_no TEXT UNIQUE NOT NULL,
+    payment_date DATE NOT NULL,
+    amount NUMERIC(10,2) NOT NULL,
+    payment_method TEXT,
+    transaction_code TEXT
+);
+
+COMMIT;
+
+-- ========================================================
+-- 12. Varlık BAŞLIĞI: TEMA BOOLEAN TUTAN TABLO (HER ŞEYDEN BAĞIMSIZ)
+-- ========================================================
+-- Ayarları tutacak tablo
+CREATE TABLE app_settings (
+    id INT PRIMARY KEY CHECK (id = 1), -- Sadece 1 ID'li kayıt olabilir
+    is_dark_mode BOOLEAN DEFAULT FALSE
+);
+
+-- Başlangıç için varsayılan (Aydınlık) değeri ekleyelim
+INSERT INTO app_settings (id, is_dark_mode) VALUES (1, FALSE);

@@ -1,0 +1,218 @@
+-- ==============================================================
+-- ARAÇ MUAYENE SİSTEMİ - FİNAL TRIGGER LİSTESİ (ÖDEME KISITLAMASI YOK)
+-- ==============================================================
+
+-- 1) AYNI ARAÇ İÇİN AKTİF TEK RANDEVU OLSUN
+CREATE OR REPLACE FUNCTION check_single_active_appointment()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'ACTIVE' THEN
+        IF EXISTS (
+            SELECT 1 FROM appointment
+            WHERE vehicle_id = NEW.vehicle_id
+              AND status = 'ACTIVE'
+              AND appointment_id <> COALESCE(NEW.appointment_id, -1)
+        ) THEN
+            RAISE EXCEPTION 'Bu araç için zaten aktif bir randevu var';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_single_active_appointment ON appointment;
+CREATE TRIGGER trg_single_active_appointment
+BEFORE INSERT OR UPDATE ON appointment
+FOR EACH ROW
+EXECUTE FUNCTION check_single_active_appointment();
+
+
+-- ==============================================================
+-- 2) INSPECTION SONUCUNU GELİŞMİŞ KURALLARLA HESAPLA
+-- ==============================================================
+
+CREATE OR REPLACE FUNCTION update_inspection_result()
+RETURNS TRIGGER AS $$
+DECLARE
+    cnt_failed_tests INT;
+    cnt_unsafe INT;
+    cnt_major INT;
+    cnt_minor INT;
+    target_inspection_id INT;
+    is_finished BOOLEAN;
+BEGIN
+    -- 1. Tetikleyen tablodan ID'yi bul
+    IF TG_TABLE_NAME = 'test_result' OR TG_TABLE_NAME = 'inspection_defect' THEN
+        target_inspection_id := NEW.inspection_id;
+    ELSE
+        target_inspection_id := NEW.inspection_id;
+    END IF;
+
+    -- 2. Muayene BİTMİŞ Mİ kontrol et (Bitir butonuna basıldı mı?)
+    SELECT (end_time IS NOT NULL) INTO is_finished
+    FROM inspection
+    WHERE inspection_id = target_inspection_id;
+
+    -- 3. Eğer muayene bitmediyse (Sadece Kaydet dendi ise)
+    -- Statüyü 'DEVAM EDİYOR' olarak koru ve hesaplama yapmadan çık.
+    IF is_finished = FALSE THEN
+        UPDATE inspection 
+        SET result_status = 'DEVAM EDİYOR' 
+        WHERE inspection_id = target_inspection_id 
+          AND result_status <> 'DEVAM EDİYOR';
+        RETURN NEW;
+    END IF;
+
+    -- ==========================================================
+    -- HESAPLAMA MOTORU (MUAYENE BİTİRİLDİĞİNDE ÇALIŞIR)
+    -- ==========================================================
+
+    -- 4. Testlerden kalan sayısını bul
+    SELECT COUNT(*) INTO cnt_failed_tests
+    FROM test_result
+    WHERE inspection_id = target_inspection_id
+      AND is_passed = FALSE;
+
+    -- 5. Kusurları kategorilerine göre say (Tek sorguda hepsini alıyoruz)
+    SELECT 
+        COUNT(*) FILTER (WHERE d.severity ILIKE '%EMNİYETSİZ%' OR d.severity ILIKE '%UNSAFE%'),
+        COUNT(*) FILTER (WHERE d.severity ILIKE '%AĞIR%' OR d.severity ILIKE '%MAJOR%'),
+        COUNT(*) FILTER (WHERE d.severity ILIKE '%HAFİF%' OR d.severity ILIKE '%MINOR%')
+    INTO cnt_unsafe, cnt_major, cnt_minor
+    FROM inspection_defect id
+    JOIN defect_catalog d ON id.defect_id = d.defect_id
+    WHERE id.inspection_id = target_inspection_id;
+
+    -- 6. KARAR MEKANİZMASI (ÖNCELİK SIRASINA GÖRE)
+    -- Emniyetsiz varsa direkt kalır. Diğer limitler aşılırsa kalır.
+    
+    UPDATE inspection
+    SET result_status = CASE
+        -- KURAL 1: Emniyetsiz kusur varsa (1 veya daha fazla) -> DİREKT KALDI
+        WHEN cnt_unsafe > 0 THEN 'FAILED'
+        
+        -- KURAL 2: Ağır kusur sayısı 2'den fazlaysa (3. kusurda patlar) -> KALDI
+        WHEN cnt_major > 2 THEN 'FAILED'
+        
+        -- KURAL 3: Hafif kusur sayısı 3'ten fazlaysa (4. kusurda patlar) -> KALDI
+        WHEN cnt_minor > 3 THEN 'FAILED'
+        
+        -- KURAL 4: Başarısız test sayısı 3'ten fazlaysa (4. testte patlar) -> KALDI
+        WHEN cnt_failed_tests > 3 THEN 'FAILED'
+        
+        -- HİÇBİRİ YOKSA -> GEÇTİ
+        ELSE 'PASSED'
+    END
+    WHERE inspection_id = target_inspection_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3) INSPECTION BİTTİĞİNDE RANDEVU OTOMATİK KAPANIR
+CREATE OR REPLACE FUNCTION close_appointment_after_inspection()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.end_time IS NOT NULL THEN
+        UPDATE appointment
+        SET status = 'COMPLETED'
+        WHERE appointment_id = NEW.appointment_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_close_appointment ON inspection;
+CREATE TRIGGER trg_close_appointment
+AFTER UPDATE OF end_time ON inspection
+FOR EACH ROW
+EXECUTE FUNCTION close_appointment_after_inspection();
+
+
+-- 4) TEST SONUCU LİMİT DIŞINDAYSA OTOMATİK FAIL YAP
+CREATE OR REPLACE FUNCTION auto_test_validation()
+RETURNS TRIGGER AS $$
+DECLARE
+    min_val NUMERIC;
+    max_val NUMERIC;
+BEGIN
+    SELECT min_limit, max_limit
+    INTO min_val, max_val
+    FROM test_parameter
+    WHERE test_parameter_id = NEW.test_parameter_id;
+
+    IF NEW.measured_value < min_val OR NEW.measured_value > max_val THEN
+        NEW.is_passed := FALSE;
+    ELSE
+        NEW.is_passed := TRUE;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_auto_test_validation ON test_result;
+CREATE TRIGGER trg_auto_test_validation
+BEFORE INSERT OR UPDATE ON test_result
+FOR EACH ROW
+EXECUTE FUNCTION auto_test_validation();
+
+
+-- 5. MADDE (ÖDEME KISITLAMASI) KALDIRILDI.
+-- Araç kalsa da geçse de ödeme kaydı girilebilir.
+
+
+-- 6) AKTİF RUHSAT OTOMATİK KAPATMA (ESKİLERİ PASİFE ÇEK)
+CREATE OR REPLACE FUNCTION single_active_registration()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE license_registration
+    SET is_active = FALSE
+    WHERE vehicle_id = NEW.vehicle_id
+      AND registration_id <> NEW.registration_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_single_active_registration ON license_registration;
+CREATE TRIGGER trg_single_active_registration
+AFTER INSERT ON license_registration
+FOR EACH ROW
+EXECUTE FUNCTION single_active_registration();
+
+
+-- 7) İSTASYON GÜNLÜK RANDEVU LİMİTLEYİCİ
+CREATE OR REPLACE FUNCTION enforce_station_daily_capacity()
+RETURNS TRIGGER AS $$
+DECLARE
+    today_count INT;
+    max_capacity INT;
+BEGIN
+    -- İstasyon kapasitesi
+    SELECT capacity_per_day
+    INTO max_capacity
+    FROM inspection_station
+    WHERE station_id = NEW.station_id;
+
+    -- O günkü randevu sayısı
+    SELECT COUNT(*)
+    INTO today_count
+    FROM appointment
+    WHERE station_id = NEW.station_id
+      AND appointment_date >= date_trunc('day', NEW.appointment_date)
+      AND appointment_date <  date_trunc('day', NEW.appointment_date) + INTERVAL '1 day';
+
+    IF today_count >= max_capacity THEN
+        RAISE EXCEPTION 'Bu istasyon için günlük kapasite dolu (% / %)', today_count, max_capacity;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_enforce_station_capacity ON appointment;
+CREATE TRIGGER trg_enforce_station_capacity
+BEFORE INSERT ON appointment
+FOR EACH ROW
+EXECUTE FUNCTION enforce_station_daily_capacity();
