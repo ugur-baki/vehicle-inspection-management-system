@@ -35,6 +35,10 @@ To run the project locally:
 4. Update database connection settings if necessary.
 5. Run the application.
 
+## Screenshots
 
+### Main Interface
+![Main Interface](Main Interface.png)
 
-
+### Appointment Management
+![Appointment Management](Appointment Management.png)
