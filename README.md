@@ -42,3 +42,7 @@ To run the project locally:
 
 ### Appointment Management
 ![Appointment Management](Appointment Management.png)
+
+## Database Design
+The following Chen diagram represents the conceptual database design used in this project.
+![Chen Diagram](yeniChen.png)
